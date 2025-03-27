@@ -23,6 +23,7 @@ class Block:
         self.nounce = nounce
         self.block_data = block_data
         self.block_data_hash = computehash(block_header, previous_block_hash, nounce, block_data, self.timestamp)
+        self.data = block_data  # Alias for compatibility
 
     def __repr__(self):
         return f"Block(header={self.block_header}, previous_hash={self.previous_block_hash}, nounce={self.nounce}, data={self.block_data}, timestamp={self.timestamp}, hash={self.block_data_hash})"
@@ -44,10 +45,12 @@ class Blockchain:
         self.create_genesis_block() 
 
     def create_genesis_block(self):
-        genesis_block = Block(block_header="Genesis Block", previous_block_hash="0", nounce=0, block_data="This is the genesis block.")
+        genesis_block = Block(block_header="Genesis Block", previous_block_hash="0", nounce=0, block_data={"message": "This is the genesis block."})
         self.chain.append(genesis_block)
 
     def new_block(self, block_header, block_data):
+        if not isinstance(block_data, dict):
+            raise ValueError("block_data must be a dictionary. Received: " + str(type(block_data)))
         previous_block_hash = self.chain[-1].block_data_hash
         nounce = 0 
         timestamp = time.time()
@@ -63,20 +66,34 @@ class Blockchain:
 
     def add_transaction(self, sender, receiver, amount, description):
         transaction = Transaction(sender, receiver, amount, description)
-        self.chain[-1].block_data += f"\n{transaction}"
+        if isinstance(self.chain[-1].block_data, dict):
+            self.chain[-1].block_data.setdefault("transactions", []).append(transaction)
+        else:
+            raise ValueError("Last block's data is not a dictionary")
         return transaction
 
     def get_balance(self, user):
         balance = 0
         for block in self.chain:
-            for line in block.block_data.splitlines():
-                if "Transaction" in line:
-                    tx = eval(line)
-                    if tx.sender == user:
-                        balance -= tx.amount
-                    if tx.receiver == user:
-                        balance += tx.amount
+            if isinstance(block.block_data, dict):  # Ensure block_data is a dictionary
+                if block.block_data.get("receiver") == user:
+                    balance += block.block_data.get("amount", 0)
+                if block.block_data.get("sender") == user:
+                    balance -= block.block_data.get("amount", 0)
         return balance
+
+    def update_balance(self, user, amount):
+        # Ensure block_data is a dictionary and append the transaction
+        transaction = {
+            "sender": "system",
+            "receiver": user,
+            "amount": amount,
+            "description": "Balance update"
+        }
+        if isinstance(self.chain[-1].block_data, dict):
+            self.chain[-1].block_data.setdefault("transactions", []).append(transaction)
+        else:
+            raise ValueError("Last block's data is not a dictionary")
 
     def __repr__(self):
         return f"Blockchain(chain={self.chain})"

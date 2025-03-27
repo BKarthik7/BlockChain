@@ -50,7 +50,7 @@ def handle_client(client_socket, blockchain):
                     patient_id = request['patient_id']
                     blood_test_data = request['blood_test_data']
                     blockchain.new_block("Blood Test", {"patient_id": patient_id, "data": blood_test_data})
-                    blockchain.update_balance("doctor", 10)  # Incentive for doctor
+                    blockchain.update_balance(authenticated_user, 10) 
                     response = {'message': 'Blood test data added!', 'block': str(blockchain.chain[-1])}
                     client_socket.send(json.dumps(response).encode('utf-8'))
 
@@ -58,17 +58,56 @@ def handle_client(client_socket, blockchain):
                     patient_id = request['patient_id']
                     prescription_data = request['prescription_data']
                     blockchain.new_block("Prescription", {"patient_id": patient_id, "data": prescription_data})
-                    blockchain.update_balance("diagnostic", 10)  # Incentive for diagnostic center
+                    blockchain.update_balance(authenticated_user, 10) 
                     response = {'message': 'Prescription added!', 'block': str(blockchain.chain[-1])}
                     client_socket.send(json.dumps(response).encode('utf-8'))
 
                 elif request['action'] == 'access_prescription':
                     patient_id = request['patient_id']
                     prescription_blocks = [
-                        block for block in blockchain.chain
+                        {
+                            "header": block.block_header,
+                            "data": block.block_data,  
+                            "timestamp": block.timestamp,
+                            "hash": block.block_data_hash
+                        }
+                        for block in blockchain.chain
+                        if isinstance(block.block_data, dict) and block.block_data.get('patient_id') == patient_id and block.block_header == "Prescription"
+                    ]
+                    response = {'message': 'Prescriptions retrieved', 'prescriptions': prescription_blocks}
+                    client_socket.send(json.dumps(response).encode('utf-8'))
+
+                elif request['action'] == 'get_balance':
+                    try:
+                        balance = blockchain.get_balance(authenticated_user)
                         response = {'message': 'Balance retrieved', 'balance': balance}
                     except Exception as e:
                         response = {'message': f'Error retrieving balance: {str(e)}'}
+                    client_socket.send(json.dumps(response).encode('utf-8'))
+
+                elif request['action'] == 'add_transaction':
+                    sender = request['sender']
+                    receiver = request['receiver']
+                    amount = request['amount']
+                    description = request['description']
+                    blockchain.new_block("Transaction", {
+                        "sender": sender,
+                        "receiver": receiver,
+                        "amount": amount,
+                        "description": description
+                    })
+                    response = {'message': 'Transaction added successfully!'}
+                    client_socket.send(json.dumps(response).encode('utf-8'))
+
+                elif request['action'] == 'add_block':
+                    block_header = request['block_header']
+                    block_data = request['block_data']
+                    blockchain.new_block(block_header, {"data": block_data}) 
+                    response = {'message': 'Block added successfully!', 'block': str(blockchain.chain[-1])}
+                    client_socket.send(json.dumps(response).encode('utf-8'))
+
+                elif request['action'] == 'get_chain':
+                    response = {'message': 'Blockchain retrieved', 'chain': [str(block) for block in blockchain.chain]}
                     client_socket.send(json.dumps(response).encode('utf-8'))
 
                 else:

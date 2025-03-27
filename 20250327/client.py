@@ -10,47 +10,61 @@ session_token = None
 
 def send_request(action, block_header=None, block_data=None, **kwargs):
     global session_token
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-        client_socket.connect((SERVER_IP, SERVER_PORT))
-        
-        request = {
-            'action': action
-        }
-        if session_token:
-            request['session_token'] = session_token  
-        if block_header and block_data:
-            request['block_header'] = block_header
-            request['block_data'] = block_data
+    max_retries = 3
+    for attempt in range(max_retries):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+            client_socket.connect((SERVER_IP, SERVER_PORT))
+            
+            request = {
+                'action': action
+            }
+            if session_token:
+                request['session_token'] = session_token
+            if block_header and block_data:
+                request['block_header'] = block_header
+                request['block_data'] = block_data
 
-        request.update(kwargs)
+            request.update(kwargs)
 
-        client_socket.send(json.dumps(request).encode('utf-8'))
+            client_socket.send(json.dumps(request).encode('utf-8'))
 
-        response = client_socket.recv(1024).decode('utf-8')
-        if not response.strip():  
-            print("--------------------------")
-            print("Error: Received an empty response from the server.")
-            print("--------------------------")
-            return None
-        try:
-            response_data = json.loads(response)  
-            print("--------------------------")
-            print(f"Response: {response_data}")
-            print("--------------------------")
-            return response_data
-        except json.JSONDecodeError:
-            print("--------------------------")
-            print("Error: Received invalid JSON response from the server.")
-            print("--------------------------")
-            return None
+            response = client_socket.recv(4096).decode('utf-8')
+            if not response.strip():
+                print(f"Attempt {attempt + 1}/{max_retries}: Empty response from server.")
+                if attempt < max_retries - 1:
+                    continue  # Retry
+                print("--------------------------")
+                print("Error: Received an empty response from the server after retries.")
+                print("--------------------------")
+                return {'error': 'Empty response from server'}
+            try:
+                response_data = json.loads(response)  
+                print("--------------------------")
+                print(f"Response: {response_data}")
+                print("--------------------------")
+                if 'message' in response_data and response_data['message'] == 'Unknown or unauthorized action':
+                    print("Error: Unauthorized action or invalid session token.")
+                    print(f"Debug Info: Action={action}, Session Token={session_token}, Request={request}")
+                return response_data
+            except json.JSONDecodeError:
+                print("--------------------------")
+                print("Error: Received invalid JSON response from the server.")
+                print("--------------------------")
+                return {'error': 'Invalid JSON response'}
 
 def add_block(block_header, block_data):
-    response = send_request('add_block', block_header, block_data)
-    print(f"Add Block Response: {response}")
+    response = send_request('add_block', block_header, {"data": block_data})
+    if response and 'error' not in response:
+        print(f"Add Block Response: {response}")
+    else:
+        print("Failed to add block. Debug Info:", response)
 
 def get_chain():
     response = send_request('get_chain')
-    print(f"Blockchain: {response}")
+    if response and 'error' not in response:
+        print(f"Blockchain: {response}")
+    else:
+        print("Failed to retrieve blockchain. Debug Info:", response)
 
 def login(username, password):
     global session_token
@@ -66,16 +80,22 @@ def login(username, password):
         print("--------------------------")
 
 def add_transaction(sender, receiver, amount, description):
-    response = send_request('add_transaction', block_header=None, block_data=None, sender=sender, receiver=receiver, amount=amount, description=description)
-    print("--------------------------")
-    print(f"Add Transaction Response: {response}")
-    print("--------------------------")
+    response = send_request('add_transaction', sender=sender, receiver=receiver, amount=amount, description=description)
+    if response and 'error' not in response:
+        print("--------------------------")
+        print(f"Add Transaction Response: {response}")
+        print("--------------------------")
+    else:
+        print("Failed to add transaction. Debug Info:", response)
 
-def get_balance(user):
-    response = send_request('get_balance', block_header=None, block_data=None, user=user)
-    print("--------------------------")
-    print(f"Balance for {user}: {response}")
-    print("--------------------------")
+def get_balance(user=None):
+    response = send_request('get_balance')
+    if response and 'balance' in response:
+        print("--------------------------")
+        print(f"Balance: {response['balance']}")
+        print("--------------------------")
+    else:
+        print(f"Failed to retrieve balance. Debug Info: {response}")
 
 def create_patient(patient_id, patient_data):
     response = send_request('create_patient', patient_id=patient_id, patient_data=patient_data)
@@ -85,21 +105,30 @@ def create_patient(patient_id, patient_data):
 
 def add_blood_test(patient_id, blood_test_data):
     response = send_request('add_blood_test', patient_id=patient_id, blood_test_data=blood_test_data)
-    print("--------------------------")
-    print(f"Add Blood Test Response: {response}")
-    print("--------------------------")
+    if response and 'error' not in response:
+        print("--------------------------")
+        print(f"Add Blood Test Response: {response}")
+        print("--------------------------")
+    else:
+        print("Failed to add blood test. Debug Info:", response)
 
 def add_prescription(patient_id, prescription_data):
     response = send_request('add_prescription', patient_id=patient_id, prescription_data=prescription_data)
-    print("--------------------------")
-    print(f"Add Prescription Response: {response}")
-    print("--------------------------")
+    if response and 'error' not in response:
+        print("--------------------------")
+        print(f"Add Prescription Response: {response}")
+        print("--------------------------")
+    else:
+        print("Failed to add prescription. Debug Info:", response)
 
 def access_prescription(patient_id):
     response = send_request('access_prescription', patient_id=patient_id)
-    print("--------------------------")
-    print(f"Access Prescription Response: {response}")
-    print("--------------------------")
+    if response and 'error' not in response:
+        print("--------------------------")
+        print(f"Access Prescription Response: {response}")
+        print("--------------------------")
+    else:
+        print("Failed to access prescription. Debug Info:", response)
 
 if __name__ == "__main__":
     login("doctor", "doc123")
