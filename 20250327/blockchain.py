@@ -23,7 +23,7 @@ class Block:
         self.nounce = nounce
         self.block_data = block_data
         self.block_data_hash = computehash(block_header, previous_block_hash, nounce, block_data, self.timestamp)
-        self.data = block_data  # Alias for compatibility
+        self.data = block_data  
 
     def __repr__(self):
         return f"Block(header={self.block_header}, previous_hash={self.previous_block_hash}, nounce={self.nounce}, data={self.block_data}, timestamp={self.timestamp}, hash={self.block_data_hash})"
@@ -75,7 +75,7 @@ class Blockchain:
     def get_balance(self, user):
         balance = 0
         for block in self.chain:
-            if isinstance(block.block_data, dict):  # Ensure block_data is a dictionary
+            if isinstance(block.block_data, dict):
                 if block.block_data.get("receiver") == user:
                     balance += block.block_data.get("amount", 0)
                 if block.block_data.get("sender") == user:
@@ -83,7 +83,6 @@ class Blockchain:
         return balance
 
     def update_balance(self, user, amount):
-        # Ensure block_data is a dictionary and append the transaction
         transaction = {
             "sender": "system",
             "receiver": user,

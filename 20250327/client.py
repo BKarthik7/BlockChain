@@ -130,14 +130,70 @@ def access_prescription(patient_id):
     else:
         print("Failed to access prescription. Debug Info:", response)
 
+users = {
+    "doctor": {"password": "doc123", "role": "doctor", "functions": ["create_patient", "add_prescription", "access_prescription", "add_transaction", "get_balance"]},
+    "diagnostic": {"password": "diag123", "role": "diagnostic", "functions": ["add_blood_test"]},
+    "pharmacy": {"password": "pharma123", "role": "pharmacy", "functions": ["access_prescription"]},
+}
+
 if __name__ == "__main__":
-    login("doctor", "doc123")
-    create_patient("patient_001", {"name": "John Doe", "age": 30, "condition": "Fever"})
-    add_blood_test("patient_001", {"test": "Blood Test", "result": "Normal"})
-    add_prescription("patient_001", {"medication": "Paracetamol", "dosage": "500mg"})
-    access_prescription("patient_001")
-    add_transaction("doctor", "diagnostic", 50, "Blood test incentive")
-    get_balance("doctor")
-    add_block("Block 1", "This is the first block.")
-    add_block("Block 2", "This is the second block.")
-    get_chain()
+    # login("doctor", "doc123")
+    # create_patient("patient_001", {"name": "John Doe", "age": 30, "condition": "Fever"})
+    # add_blood_test("patient_001", {"test": "Blood Test", "result": "Normal"})
+    # add_prescription("patient_001", {"medication": "Paracetamol", "dosage": "500mg"})
+    # access_prescription("patient_001")
+    # add_transaction("doctor", "diagnostic", 50, "Blood test incentive")
+    # get_balance("doctor")
+    # add_block("Block 1", "This is the first block.")
+    # add_block("Block 2", "This is the second block.")
+    # get_chain()
+    printf("Which user are you?")
+    print("1. Doctor (doctor) \n2. Diagnostic Center (diagnostic) \n3. Pharmacy (pharmacy)")
+    user = input("Enter your choice: ")
+
+    if user == "doctor":
+        print("You are a doctor.")
+        print("You can perform the following actions: \n1. Create Patient \n2. Add Prescription \n3. Access Prescription \n4. Add Transaction \n5. Get Balance")
+        action = input("Enter the action you want to perform: ")
+        if action == "1":
+            patient_id = input("Enter patient ID: ")
+            patient_data = input("Enter patient data: ")
+            create_patient(patient_id, patient_data)
+        elif action == "2":
+            patient_id = input("Enter patient ID: ")
+            prescription_data = input("Enter prescription data: ")
+            add_prescription(patient_id, prescription_data)
+        elif action == "3":
+            patient_id = input("Enter patient ID: ")
+            access_prescription(patient_id)
+        elif action == "4":
+            sender = input("Enter sender: ")
+            receiver = input("Enter receiver: ")
+            amount = input("Enter amount: ")
+            description = input("Enter description: ")
+            add_transaction(sender, receiver, amount, description)
+        elif action == "5":
+            get_balance("doctor")
+        else:
+            print("Invalid action.")
+    elif user == "diagnostic":
+        print("You are a diagnostic center.")
+        print("You can perform the following actions: \n1. Add Blood Test")
+        action = input("Enter the action you want to perform: ")
+        if action == "1":
+            patient_id = input("Enter patient ID: ")
+            blood_test_data = input("Enter blood test data: ")
+            add_blood_test(patient_id, blood_test_data)
+        else:
+            print("Invalid action.")
+    elif user == "pharmacy":
+        print("You are a pharmacy.")
+        print("You can perform the following actions: \n1. Access Prescription")
+        action = input("Enter the action you want to perform: ")
+        if action == "1":
+            patient_id = input("Enter patient ID: ")
+            access_prescription(patient_id)
+        else:
+            print("Invalid action.")
+    else:
+        print("Invalid user.")

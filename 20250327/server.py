@@ -6,9 +6,9 @@ import uuid
 from blockchain import Blockchain
 
 users = {
-    "doctor": {"password": "doc123", "role": "doctor"},
-    "diagnostic": {"password": "diag123", "role": "diagnostic"},
-    "pharmacy": {"password": "pharma123", "role": "pharmacy"}
+    "doctor": {"password": "doc123", "role": "doctor", "functions": ["create_patient", "add_prescription", "access_prescription", "add_transaction", "get_balance"]},
+    "diagnostic": {"password": "diag123", "role": "diagnostic", "functions": ["add_blood_test"]},
+    "pharmacy": {"password": "pharma123", "role": "pharmacy", "functions": ["access_prescription"]},
 }
 
 sessions = {}  
