@@ -147,7 +147,7 @@ if __name__ == "__main__":
     # add_block("Block 1", "This is the first block.")
     # add_block("Block 2", "This is the second block.")
     # get_chain()
-    printf("Which user are you?")
+    print("Which user are you?")
     print("1. Doctor (doctor) \n2. Diagnostic Center (diagnostic) \n3. Pharmacy (pharmacy)")
     user = input("Enter your choice: ")
 
