@@ -39,33 +39,33 @@ def handle_client(client_socket, blockchain):
 
             elif request.get('session_token') in sessions:
                 authenticated_user = sessions[request['session_token']]
-                if request['action'] == 'add_block':
-                    block_header = request['block_header']
-                    block_data = request['block_data']
-                    blockchain.new_block(block_header, block_data)
-                    response = {
-                        'message': 'Block added successfully!',
-                        'block': str(blockchain.chain[-1])
-                    }
+                if request['action'] == 'create_patient':
+                    patient_id = request['patient_id']
+                    patient_data = request['patient_data']
+                    blockchain.new_block("Genesis Block", {"patient_id": patient_id, "data": patient_data})
+                    response = {'message': 'Patient created successfully!', 'block': str(blockchain.chain[-1])}
                     client_socket.send(json.dumps(response).encode('utf-8'))
 
-                elif request['action'] == 'get_chain':
-                    response = [str(block) for block in blockchain.chain]
+                elif request['action'] == 'add_blood_test':
+                    patient_id = request['patient_id']
+                    blood_test_data = request['blood_test_data']
+                    blockchain.new_block("Blood Test", {"patient_id": patient_id, "data": blood_test_data})
+                    blockchain.update_balance("doctor", 10)  # Incentive for doctor
+                    response = {'message': 'Blood test data added!', 'block': str(blockchain.chain[-1])}
                     client_socket.send(json.dumps(response).encode('utf-8'))
 
-                elif request['action'] == 'add_transaction':
-                    sender = request['sender']
-                    receiver = request['receiver']
-                    amount = request['amount']
-                    description = request['description']
-                    transaction = blockchain.add_transaction(sender, receiver, amount, description)
-                    response = {'message': 'Transaction added', 'transaction': str(transaction)}
+                elif request['action'] == 'add_prescription':
+                    patient_id = request['patient_id']
+                    prescription_data = request['prescription_data']
+                    blockchain.new_block("Prescription", {"patient_id": patient_id, "data": prescription_data})
+                    blockchain.update_balance("diagnostic", 10)  # Incentive for diagnostic center
+                    response = {'message': 'Prescription added!', 'block': str(blockchain.chain[-1])}
                     client_socket.send(json.dumps(response).encode('utf-8'))
 
-                elif request['action'] == 'get_balance':
-                    try:
-                        user = request['user']
-                        balance = blockchain.get_balance(user)
+                elif request['action'] == 'access_prescription':
+                    patient_id = request['patient_id']
+                    prescription_blocks = [
+                        block for block in blockchain.chain
                         response = {'message': 'Balance retrieved', 'balance': balance}
                     except Exception as e:
                         response = {'message': f'Error retrieving balance: {str(e)}'}
