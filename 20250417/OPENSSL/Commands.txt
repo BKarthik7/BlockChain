@@ -1,0 +1,9 @@
+openssl genrsa -out key.pem 2048
+openssl rsa -pubout -in key.pem -out pubkey.pem
+openssl rsautl -encrypt -in message.txt -out encrypted.txt -pubin -inkey pubkey.pem
+openssl ecparam -name secp256r1 -genkey -out ecprivkey.pem
+openssl ec -in ecprivkey.pem -pubout -out ecpubkey.pem
+openssl sha256 -in message.txt -out message.sha256
+openssl dgst -sha256 -out message.sha256 message.txt
+openssl sha256 -c -in message.txt -sha256 message.sha256
+openssl dgst -sha256 -verify message.sha256 -signature message.txt
